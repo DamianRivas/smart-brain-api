@@ -1,9 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt-nodejs');
+const cors = require('cors');
 
 const app = express();
-
-app.use(bodyParser.json());
 
 const database = {
   users: [
@@ -23,8 +23,18 @@ const database = {
       entries: 0,
       joined: new Date()
     }
+  ],
+  login: [
+    {
+      id: '123',
+      hash: '',
+      email: 'user@example.com'
+    }
   ]
 }
+
+app.use(bodyParser.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.send(database.users);
@@ -41,6 +51,9 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
+  bcrypt.hash(password, null, null, (err, hash) => {
+    console.log(hash);
+  });
   database.users.push({
     id: '125',
     name: name,
@@ -53,9 +66,41 @@ app.post('/register', (req, res) => {
   res.json(database.users[database.users.length - 1]);
 })
 
+app.get('/profile/:id', (req, res) => {
+  const { id } = req.params;
+  database.users.forEach(user => {
+    if (user.id === id) {
+      return res.json(user);
+    }
+  });
+  res.status(404).json('no such user');
+});
+
+app.put('/image', (req, res) => {
+  const { id } = req.body;
+  database.users.forEach(user => {
+    if (user.id === id) {
+      return res.json(++user.entries);
+    }
+  });
+  res.status(404).json('no such user');
+});
+
+
+
+// Load hash from your password DB.
+// bcrypt.compare("bacon", hash, function(err, res) {
+//   // res == true
+// });
+// bcrypt.compare("veggies", hash, function(err, res) {
+//   // res = false
+// });
+
 app.listen(3000, () => {
   console.log('App is running on port 3000...')
 });
+
+
 
 /*
   / --> res = this is working
